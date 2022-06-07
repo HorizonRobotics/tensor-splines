@@ -24,6 +24,8 @@
       shellHook = ''
         export PS1="$(echo -e '\uf3e2') {\[$(tput sgr0)\]\[\033[38;5;228m\]\w\[$(tput sgr0)\]\[\033[38;5;15m\]} (${name}) \\$ \[$(tput sgr0)\]"
         export PYTHONPATH="$(pwd):$PYTHONPATH"
+        # In poetry environment, packages such as numpy needs them.
+        export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib/:${pkgs.zlib}/lib/:$LD_LIBRARY_PATH"
       '';
     };
   });
