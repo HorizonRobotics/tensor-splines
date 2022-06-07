@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "tensor-splines"
+version = "0.5.0"
+description = "An utility library to generate splines with tensor-based batch operation support."
+authors = ["Break Yang <yiqing.yang@horizon.ai>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "^1.22.4"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
