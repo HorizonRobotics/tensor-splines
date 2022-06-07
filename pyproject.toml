@@ -6,8 +6,9 @@ authors = ["Break Yang <yiqing.yang@horizon.ai>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8"
-numpy = "^1.22.4"
+python = ">=3.7,<3.11"
+matplotlib = "^3.5.2"
+numpy = "^1.21.5"
 torch = "^1.8.1"
 
 [tool.poetry.dev-dependencies]
