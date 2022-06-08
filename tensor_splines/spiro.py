@@ -1,3 +1,4 @@
+from __future__ import annotations
 import torch
 import numpy as np
 
@@ -5,10 +6,38 @@ from .solvers import solve_euler_spiral
 from .integral import integrate_eular_spiral
 
 class SpiroBatch(object):
+    """A SpiroBatch holds a batch of spiro curves.
+
+    Spiro curve is a specific kind of splines. Mathematically, it is described
+    by the following:
+
+        theta(s) = k0 * s + 1/2 k1 * s^2 + 1/6 k2 * s^3 + 1/24 k3 * s^4
+
+    where s goes from -0.5 to 0.5, with -0.5 corresponds to the start point and
+    0.5 corresponds to the end point.
+
+    The main factory methods are used to create the batch of spiro with tensors
+    and their batch operations.
+
+    """
     def __init__(self, k_parameters: torch.Tensor,
                  starts: torch.Tensor,
                  ends: torch.Tensor,
                  lengths: torch.Tensor):
+        """General constructor.
+
+        Normally, you should not directly call this, and should rather call the
+        factory methods below.
+
+        Args:
+
+            k_parameters: the k0, k1, k2 and k3 for each of the curves in the
+                bacth, [*B, 4]
+            starts: the batch of start points for each of the curves, [*B, 2]
+            ends: the batch of end points for each of the curves, [*B, 2]
+            lengths: the actual length of each of the curves, [*B]
+
+        """
         B = k_parameters.shape[:-1]
         assert k_parameters.shape == (*B, 4)
         assert starts.shape == ends.shape == (*B, 2)
@@ -23,13 +52,35 @@ class SpiroBatch(object):
     def make_euler_spiral(starts: torch.Tensor,
                           ends: torch.Tensor,
                           theta_in: torch.Tensor,
-                          theta_out: torch.Tensor):
+                          theta_out: torch.Tensor) -> SpiroBatch:
+        """Factory method to create a batch of Euler Spiral curves.
+
+        An Euler spiral is a special case of spiro where both k2 and k3 are 0.
+
+        This method will create the whole batch of spiros simultaneously.
+
+        Args:
+
+            starts: the batch of start points
+            ends: the batch of end points
+            theta_in: the relative angle (in radian) w.r.t. the chord at the
+                start point of each curve
+            theta_out: the relative angle (in radian) w.r.t. the chord at the
+                end point of each curve
+
+        Returns:
+
+            The constructed batch of spiro (Euler spiral) curves.
+
+        """
         k_parameters, chord, chord_beta = solve_euler_spiral(theta_in, theta_out)
         return SpiroBatch(k_parameters, starts, ends,
                           lengths=(ends - starts).norm(dim=-1) / chord)
 
     @property
     def k_parameters(self):
+        """Access the k0, k1, k2 and k3 for each one in the batch.
+        """
         return self._k_parameters
 
     @property
@@ -37,6 +88,13 @@ class SpiroBatch(object):
         return self._k_parameters.shape[:-1]
 
     def curvature(self, s: torch.Tensor) -> torch.Tensor:
+        """Compute the curvature (i.e. d(theta)/ds) at the specified s.
+
+        Note that here the s is along the actual arc length (as opposite to the
+        prototype s which is within the range [-0.5, 0.5]). To compute the
+        curvature, a substitution of the variable is conducted.
+
+        """
         s_proto = s / self._lengths - 0.5
         return (self._k_parameters[..., 0] +
                 self._k_parameters[..., 1] * s_proto +
@@ -44,6 +102,16 @@ class SpiroBatch(object):
                 self._k_parameters[..., 3] * torch.pow(s_proto, 3) / 6.0) / self._lengths
 
     def render_single(self, b) -> torch.Tensor:
+        """Sample the points on the specified single curve in the batch.
+
+        Returns:
+
+           A tensor (polyline) of shape [n, 2], where n is the number of points
+           sampled. The caller does not decide which points are sampled. The
+           underlying algorithm will make the decision, so that the returned
+           polyline is smooth enough.
+
+        """
         points = []
 
         def _render_rec(ks, x0, y0, x1, y1, depth):
@@ -97,5 +165,8 @@ class SpiroBatch(object):
         return torch.tensor(points)
 
     def plot_single(self, b, ax, color='b'):
+        """Sample the points of the specified curve in the batch and draw it.
+
+        """
         points = self.render_single(b)
         ax.plot(points[:, 0].numpy(), points[:, 1].numpy(), color=color)

@@ -1,6 +1,8 @@
 # tensor-splines
 An utility library to generate splines with tensor-based batch operation support.
 
+Please see the [demo notebook](notebooks/demo.ipynb)
+
 ## Development Environment
 
 There are two `devShell` that you can invoke to get a development environment.
