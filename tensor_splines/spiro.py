@@ -78,7 +78,7 @@ class SpiroBatch(object):
                           lengths=(ends - starts).norm(dim=-1) / chord)
 
     @property
-    def k_parameters(self):
+    def k_parameters(self) -> torch.Tensor:
         """Access the k0, k1, k2 and k3 for each one in the batch.
         """
         return self._k_parameters
@@ -86,6 +86,10 @@ class SpiroBatch(object):
     @property
     def batch_shape(self):
         return self._k_parameters.shape[:-1]
+
+    @property
+    def lengths(self) -> torch.Tensor:
+        return self._lengths
 
     def curvature(self, s: torch.Tensor) -> torch.Tensor:
         """Compute the curvature (i.e. d(theta)/ds) at the specified s.
