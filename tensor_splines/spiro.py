@@ -32,6 +32,10 @@ class SpiroBatch(object):
     def k_parameters(self):
         return self._k_parameters
 
+    @property
+    def batch_shape(self):
+        return self._k_parameters.shape[:-1]
+
     def curvature(self, s: torch.Tensor) -> torch.Tensor:
         s_proto = s / self._lengths - 0.5
         return (self._k_parameters[..., 0] +
@@ -69,7 +73,7 @@ class SpiroBatch(object):
                     .25 * ks[1] - (1./16) * ks[2] + (1./128) * ks[3],
                     .125 * ks[2] - (1./32) * ks[3],
                     (1./16) * ks[3]
-                ])
+                ], dtype=np.float32)
                 thsub = rot - .25 * ks[0] + (1./32) * ks[1] - (1./384) * ks[2] + (1./6144) * ks[3]
                 cth = 0.5 * scale * np.cos(thsub)
                 sth = 0.5 * scale * np.sin(thsub)

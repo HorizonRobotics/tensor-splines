@@ -86,7 +86,7 @@ def _integrate_spiro_12th_degree_n_parts(k_parameters: torch.Tensor, n: int):
                           [0., ds, ds * s, .5 * ds * s2],
                           [0., 0., ds2, s * ds2],
                           [0., 0., 0., ds3]], device=k_parameters.device)
-        km = torch.matmul(W, k)
+        km = torch.einsum('...ij,...j->...i', W, k)
         u, v = _integrate_spiro_12th_degree(km)
 
         th = (((th4 * s + th3) * s + th2) * s + th1) * s
