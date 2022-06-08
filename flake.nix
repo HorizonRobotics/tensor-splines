@@ -29,6 +29,8 @@
       })];
     };
   in {
+    packages.default = pkgs.python3Packages.callPackage ./nix/pkgs/tensor-spline {};
+      
     devShells = {
       default = pkgs.mkShell rec {
         name = "tensor-splines";
