@@ -37,6 +37,8 @@
           numpy
           matplotlib
           pytorchWithCuda11
+          jupyterlab
+          ipywidgets
         ]); in [
           pythonEnv
           # Dev Tools
