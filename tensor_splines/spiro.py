@@ -74,6 +74,9 @@ class SpiroBatch(object):
 
         """
         k_parameters, chord, chord_beta = solve_euler_spiral(theta_in, theta_out)
+        k_parameters = k_parameters.to(theta_in.dtype)
+        chord = chord.to(theta_in.dtype)
+        chord_beta = chord_beta.to(theta_in.dtype)
         return SpiroBatch(k_parameters, starts, ends,
                           lengths=(ends - starts).norm(dim=-1) / chord)
 
@@ -161,11 +164,11 @@ class SpiroBatch(object):
                 ksub[2] += (1/16) * ks[3]
                 _render_rec(ksub, xmid, ymid, x1, y1, depth + 1)
 
-        _render_rec(self._k_parameters[b].numpy(),
-                    self._starts[b, 0],
-                    self._starts[b, 1],
-                    self._ends[b, 0],
-                    self._ends[b, 1], 0)
+        _render_rec(self._k_parameters[b].cpu().numpy(),
+                    self._starts[b, 0].cpu().numpy(),
+                    self._starts[b, 1].cpu().numpy(),
+                    self._ends[b, 0].cpu().numpy(),
+                    self._ends[b, 1].cpu().numpy(), 0)
         return torch.tensor(points)
 
     def plot_single(self, b, ax, color='b'):
