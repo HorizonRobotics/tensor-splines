@@ -31,12 +31,13 @@ def solve_euler_spiral(theta_in: torch.Tensor, theta_out: torch.Tensor):
         k1 = k_parameters[..., 1]
         chord_theta = torch.atan2(v, u)
         error = (theta_out - theta_in) - (0.25 * k1 - 2 * chord_theta)
-        converged = torch.logical_or(converged, error.abs() < 1e-9)
+        error_diff = error - error_old
+        converged = torch.logical_or(converged, error_diff.abs() < 1e-9)
         if converged.all():
             break
         new_k1 = torch.where(converged,
                              k1,
-                             k1 + (k1_old - k1) * error / (error - error_old))
+                             k1 + (k1_old - k1) * error / error_diff)
         k1_old = k1.clone()
         error_old = error
         k_parameters[..., 1] = new_k1
