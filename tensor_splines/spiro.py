@@ -125,7 +125,7 @@ class SpiroBatch(object):
             bend = np.abs(ks[0]) + np.abs(.5 * ks[1]) + np.abs(.125 * ks[2]) + np.abs((1./48) * ks[3])
             segCh = np.hypot(x1 - x0, y1 - y0)
             segTh = np.arctan2(y1 - y0, x1 - x0)
-            xy_u, xy_v = integrate_eular_spiral(torch.tensor(ks))
+            xy_u, xy_v = integrate_eular_spiral(torch.tensor(ks, dtype=torch.float64))
             xy_u = xy_u.numpy()
             xy_v = xy_v.numpy()
             ch = np.hypot(xy_u, xy_v)
@@ -152,7 +152,7 @@ class SpiroBatch(object):
                 thsub = rot - .25 * ks[0] + (1./32) * ks[1] - (1./384) * ks[2] + (1./6144) * ks[3]
                 cth = 0.5 * scale * np.cos(thsub)
                 sth = 0.5 * scale * np.sin(thsub)
-                xysub_u, xysub_v = integrate_eular_spiral(torch.tensor(ksub))
+                xysub_u, xysub_v = integrate_eular_spiral(torch.tensor(ksub, dtype=torch.float64))
                 xysub_u = xysub_u.numpy()
                 xysub_v = xysub_v.numpy()
                 xmid = x0 + cth * xysub_u - sth * xysub_v
