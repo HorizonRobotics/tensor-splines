@@ -77,7 +77,8 @@ class SpiroBatch(object):
         k_parameters = k_parameters.to(theta_in.dtype)
         chord = chord.to(theta_in.dtype)
         chord_beta = chord_beta.to(theta_in.dtype)
-        return SpiroBatch(k_parameters, starts, ends,
+        return SpiroBatch(-k_parameters,
+                          starts, ends,
                           lengths=(ends - starts).norm(dim=-1) / chord)
 
     @property
