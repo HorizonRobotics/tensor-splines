@@ -165,11 +165,11 @@ class SpiroBatch(object):
                 ksub[2] += (1/16) * ks[3]
                 _render_rec(ksub, xmid, ymid, x1, y1, depth + 1)
 
-        _render_rec(self._k_parameters[b].cpu().numpy(),
-                    self._starts[b, 0].cpu().numpy(),
-                    self._starts[b, 1].cpu().numpy(),
-                    self._ends[b, 0].cpu().numpy(),
-                    self._ends[b, 1].cpu().numpy(), 0)
+        _render_rec(self._k_parameters[b].double().cpu().numpy(),
+                    self._starts[b, 0].double().cpu().numpy(),
+                    self._starts[b, 1].double().cpu().numpy(),
+                    self._ends[b, 0].double().cpu().numpy(),
+                    self._ends[b, 1].double().cpu().numpy(), 0)
         return torch.tensor(points)
 
     def plot_single(self, b, ax, color='b'):
