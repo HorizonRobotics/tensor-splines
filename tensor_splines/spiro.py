@@ -76,10 +76,28 @@ class SpiroBatch(object):
         k_parameters, chord, chord_beta = solve_euler_spiral(theta_in, theta_out)
         k_parameters = k_parameters.to(theta_in.dtype)
         chord = chord.to(theta_in.dtype)
-        chord_beta = chord_beta.to(theta_in.dtype)
         return SpiroBatch(-k_parameters,
                           starts, ends,
                           lengths=(ends - starts).norm(dim=-1) / chord)
+
+    @staticmethod
+    def make_euler_spiral_by_length(starts: torch.Tensor,
+                                    chord_theta: torch.Tensor,
+                                    theta_in: torch.Tensor,
+                                    average_curvature: torch.Tensor,
+                                    lengths: torch.Tensor):
+        theta_out = -theta_in - lengths * average_curvature
+
+        # Now construt the sprio curve of unit length.
+        k_parameters, chord, chord_beta = solve_euler_spiral(theta_in, theta_out)
+        k_parameters = k_parameters.to(theta_in.dtype)
+        chord = chord.to(theta_in.dtype)
+
+        chord_length = chord * lengths
+        ends = starts + chord_length[:, None] * torch.stack([torch.cos(chord_theta),
+                                                             torch.sin(chord_theta)], dim=-1)
+        return SpiroBatch(-k_parameters, starts, ends, lengths=lengths)
+
 
     @property
     def k_parameters(self) -> torch.Tensor:
