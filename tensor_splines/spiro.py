@@ -23,6 +23,7 @@ class SpiroBatch(object):
     def __init__(self, k_parameters: torch.Tensor,
                  starts: torch.Tensor,
                  ends: torch.Tensor,
+                 angle_offsets: torch.Tensor,
                  lengths: torch.Tensor):
         """General constructor.
 
@@ -35,18 +36,26 @@ class SpiroBatch(object):
                 bacth, [*B, 4]
             starts: the batch of start points for each of the curves, [*B, 2]
             ends: the batch of end points for each of the curves, [*B, 2]
+            angle_offsets: theta(s) will be compensated by this amount to actually
+                become the angle difference from chord
             lengths: the actual length of each of the curves, [*B]
 
         """
         B = k_parameters.shape[:-1]
         assert k_parameters.shape == (*B, 4)
         assert starts.shape == ends.shape == (*B, 2)
+        assert angle_offsets.shape == B
         assert lengths.shape == B
 
         self._k_parameters = k_parameters
+        self._angle_offsets = angle_offsets
         self._lengths = lengths
         self._starts = starts
         self._ends = ends
+
+        chord = ends - starts
+        self._chord_theta = torch.atan2(chord[..., 1], chord[... ,0])
+        
 
     @staticmethod
     def make_euler_spiral(starts: torch.Tensor,
@@ -76,8 +85,10 @@ class SpiroBatch(object):
         k_parameters, chord, chord_beta = solve_euler_spiral(theta_in, theta_out)
         k_parameters = k_parameters.to(theta_in.dtype)
         chord = chord.to(theta_in.dtype)
+        chord_beta = chord_beta.to(theta_in.dtype)
         return SpiroBatch(-k_parameters,
                           starts, ends,
+                          angle_offsets=chord_beta,
                           lengths=(ends - starts).norm(dim=-1) / chord)
 
     @staticmethod
@@ -92,11 +103,14 @@ class SpiroBatch(object):
         k_parameters, chord, chord_beta = solve_euler_spiral(theta_in, theta_out)
         k_parameters = k_parameters.to(theta_in.dtype)
         chord = chord.to(theta_in.dtype)
+        chord_beta = chord_beta.to(theta_in.dtype)
 
         chord_length = chord * lengths
         ends = starts + chord_length[:, None] * torch.stack([torch.cos(chord_theta),
                                                              torch.sin(chord_theta)], dim=-1)
-        return SpiroBatch(-k_parameters, starts, ends, lengths=lengths)
+        return SpiroBatch(-k_parameters, starts, ends,
+                          angle_offsets=chord_beta,
+                          lengths=lengths)
 
 
     @property
@@ -126,6 +140,21 @@ class SpiroBatch(object):
                 self._k_parameters[..., 1] * s_proto +
                 self._k_parameters[..., 2] * torch.pow(s_proto, 2) * 0.5 +
                 self._k_parameters[..., 3] * torch.pow(s_proto, 3) / 6.0) / self._lengths
+
+    def theta(self, s: torch.Tensor) -> torch.Tensor:
+        """Compute the curvature (i.e. d(theta)/ds) at the specified s.
+
+        Note that here the s is along the actual arc length (as opposite to the
+        prototype s which is within the range [-0.5, 0.5]). To compute the
+        curvature, a substitution of the variable is conducted.
+
+        """
+        s_proto = s / self._lengths - 0.5
+        theta_proto = (self._k_parameters[..., 0] * s_proto +
+                       self._k_parameters[..., 1] * torch.pow(s_proto, 2) / 2.0 +
+                       self._k_parameters[..., 2] * torch.pow(s_proto, 3) / 6.0 +
+                       self._k_parameters[..., 3] * torch.pow(s_proto, 4) / 24.0)
+        return theta_proto + self._chord_theta + self._angle_offsets
 
     def render_single(self, b) -> torch.Tensor:
         """Sample the points on the specified single curve in the batch.
