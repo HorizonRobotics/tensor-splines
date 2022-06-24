@@ -37,7 +37,7 @@ class SpiroBatch(object):
             starts: the batch of start points for each of the curves, [*B, 2]
             ends: the batch of end points for each of the curves, [*B, 2]
             angle_offsets: theta(s) will be compensated by this amount to actually
-                become the angle difference from chord
+                become the angle difference from chord [*B]
             lengths: the actual length of each of the curves, [*B]
 
         """
@@ -111,6 +111,28 @@ class SpiroBatch(object):
         return SpiroBatch(-k_parameters, starts, ends,
                           angle_offsets=chord_beta,
                           lengths=lengths)
+
+    @staticmethod
+    def from_tensor(x: torch.tensor) -> SpiroBatch:
+        return SpiroBatch(
+            x[..., :4],
+            x[..., 4:6],
+            x[..., 6:8],
+            angle_offsets=x[..., 8],
+            lengths=x[..., 9])
+
+    def to_tensor(self) -> torch.Tensor:
+        """Convert the spline into its tensor representation.
+
+        The resulting tensor will be of shape [*B, 10]
+        """
+        return torch.cat([
+            self._k_parameters,              # [*B, 4]
+            self._starts,                    # [*B, 2]
+            self._ends,                      # [*B, 2]
+            self._angle_offsets[:, None],    # [*B, 1]
+            self._lengths[:, None],          # [*B, 1]
+        ], dim=-1)
 
 
     @property
