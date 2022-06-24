@@ -127,6 +127,14 @@ class SpiroBatch(object):
     def lengths(self) -> torch.Tensor:
         return self._lengths
 
+    @property
+    def starts(self) -> torch.Tensor:
+        return self._starts
+
+    @property
+    def ends(self) -> torch.Tensor:
+        return self._ends
+
     def curvature(self, s: torch.Tensor) -> torch.Tensor:
         """Compute the curvature (i.e. d(theta)/ds) at the specified s.
 
