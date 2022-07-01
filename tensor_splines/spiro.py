@@ -55,7 +55,7 @@ class SpiroBatch(object):
 
         chord = ends - starts
         self._chord_theta = torch.atan2(chord[..., 1], chord[... ,0])
-        
+
 
     @staticmethod
     def make_euler_spiral(starts: torch.Tensor,
@@ -96,7 +96,7 @@ class SpiroBatch(object):
                                     chord_theta: torch.Tensor,
                                     theta_in: torch.Tensor,
                                     average_curvature: torch.Tensor,
-                                    lengths: torch.Tensor):
+                                    lengths: torch.Tensor) -> SpiroBatch:
         theta_out = -theta_in - lengths * average_curvature
 
         # Now construt the sprio curve of unit length.
@@ -134,6 +134,36 @@ class SpiroBatch(object):
             self._lengths[:, None],          # [*B, 1]
         ], dim=-1)
 
+    @staticmethod
+    def make_euler_spiral_by_jerk(starts: torch.Tensor,
+                                  theta_start: torch.Tensor,
+                                  average_curvature: torch.Tensor,
+                                  lengths: torch.Tensor,
+                                  theta_jerk: torch.Tensor) -> SpiroBatch:
+        """Construct a spiro curve by specifying the jerk (and length/kappa).
+
+        Note that unlike the theta_in above, theta_start is actually
+        the absolute direction of the start point.
+
+        """
+        B = lengths.shape
+        k_parameters = torch.zeros(*B, 4, dtype=torch.float64)
+        k_parameters[..., 0] = (average_curvature * lengths).to(torch.float64)
+        k_parameters[..., 1] = (theta_jerk * lengths * lengths).to(torch.float64)
+        u, v = integrate_eular_spiral(k_parameters)
+
+        chord = torch.hypot(u, v).to(lengths.dtype)
+        chord_theta = torch.atan2(v, u).to(lengths.dtype)
+        k_parameters = k_parameters.to(lengths.dtype)
+
+        direction = theta_start + 0.5 * k_parameters[..., 0] - 0.125 * k_parameters[..., 1] + chord_theta
+        chord_lengths = chord * lengths
+        ends = starts + chord_lengths[:, None] * torch.stack([torch.cos(direction),
+                                                              torch.sin(direction)], dim=-1)
+
+        return SpiroBatch(k_parameters, starts, ends,
+                          angle_offsets=-chord_theta,
+                          lengths=lengths)
 
     @property
     def k_parameters(self) -> torch.Tensor:

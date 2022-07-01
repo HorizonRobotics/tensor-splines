@@ -50,3 +50,23 @@ class SpiroTest(unittest.TestCase):
         self.assertTrue(torch.isclose(spiro1.lengths, spiro.lengths).all())
         self.assertTrue(torch.isclose(spiro1._chord_theta, spiro._chord_theta).all())
         self.assertTrue(torch.isclose(spiro1._angle_offsets, spiro._angle_offsets).all())
+        
+    def test_make_euler_spiral_by_jerk(self):
+        spiro = SpiroBatch.make_euler_spiral_by_jerk(
+            starts=torch.tensor([[0.0, 0.0],
+                                 [0.0, 0.0],
+                                 [0.0, 0.0]]),
+            theta_start=torch.tensor([0.1, -0.2, 0.0]),
+            average_curvature=torch.tensor([0.01, -0.02, 0.2]),
+            lengths=torch.tensor([10.0, 10.0, 10.0]),
+            theta_jerk=torch.tensor([0.001, -0.005, -0.02]))
+        self.assertTrue(torch.isclose(torch.tensor([10.0, 10.0, 10.0]),
+                                      spiro.lengths).all())
+        self.assertTrue(torch.isclose(torch.tensor([0.1, -0.2, 0.0]),
+                                      spiro.theta(torch.zeros(3)),
+                                      rtol=1e-5, atol=1e-6).all())
+        self.assertTrue(torch.isclose(torch.tensor([0.2, -0.4, 2.0]),
+                                      spiro.theta(torch.full((3,), fill_value=10.0))).all())
+        self.assertTrue(torch.isclose(torch.tensor([0.1, -0.5, -2.0]),
+                                      spiro.k_parameters[..., 1]).all())
+        
