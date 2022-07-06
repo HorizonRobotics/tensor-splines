@@ -115,9 +115,9 @@ class SpiroBatch(object):
     @staticmethod
     def from_tensor(x: torch.tensor) -> SpiroBatch:
         return SpiroBatch(
-            x[..., :4],
-            x[..., 4:6],
-            x[..., 6:8],
+            k_parameters=x[..., :4],
+            starts=x[..., 4:6],
+            ends=x[..., 6:8],
             angle_offsets=x[..., 8],
             lengths=x[..., 9])
 
@@ -227,8 +227,8 @@ class SpiroBatch(object):
            polyline is smooth enough.
 
         """
-        points = []
-
+        points = [(self._starts[b, 0].cpu().item(),
+                   self._starts[b, 1].cpu().item())]
         def _render_rec(ks, x0, y0, x1, y1, depth):
             bend = np.abs(ks[0]) + np.abs(.5 * ks[1]) + np.abs(.125 * ks[2]) + np.abs((1./48) * ks[3])
             segCh = np.hypot(x1 - x0, y1 - y0)
@@ -277,6 +277,8 @@ class SpiroBatch(object):
                     self._starts[b, 1].double().cpu().numpy(),
                     self._ends[b, 0].double().cpu().numpy(),
                     self._ends[b, 1].double().cpu().numpy(), 0)
+        points.append((self._ends[b, 0].cpu().item(),
+                       self._ends[b, 1].cpu().item()))
         return torch.tensor(points)
 
     def plot_single(self, b, ax, color='b'):
