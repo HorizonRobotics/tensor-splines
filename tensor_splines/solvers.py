@@ -44,7 +44,7 @@ def solve_euler_spiral(theta_in: torch.Tensor, theta_out: torch.Tensor):
         error_old = error
         k_parameters[..., 1] = new_k1
 
-    assert converged.all(), f"Cannot solve Euler Spiral, maximum error: {error.max()}"
+    assert converged.all(), f"Cannot solve Euler Spiral, maximum error: {error.abs().max()}"
 
     chord = torch.hypot(u, v)
     return k_parameters, chord, chord_theta
