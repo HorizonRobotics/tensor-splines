@@ -106,8 +106,8 @@ class SpiroBatch(object):
         chord_beta = chord_beta.to(theta_in.dtype)
 
         chord_length = chord * lengths
-        ends = starts + chord_length[:, None] * torch.stack([torch.cos(chord_theta),
-                                                             torch.sin(chord_theta)], dim=-1)
+        ends = starts + chord_length[..., None] * torch.stack([torch.cos(chord_theta),
+                                                               torch.sin(chord_theta)], dim=-1)
         return SpiroBatch(-k_parameters, starts, ends,
                           angle_offsets=chord_beta,
                           lengths=lengths)
@@ -130,8 +130,8 @@ class SpiroBatch(object):
             self._k_parameters,              # [*B, 4]
             self._starts,                    # [*B, 2]
             self._ends,                      # [*B, 2]
-            self._angle_offsets[:, None],    # [*B, 1]
-            self._lengths[:, None],          # [*B, 1]
+            self._angle_offsets[..., None],    # [*B, 1]
+            self._lengths[..., None],          # [*B, 1]
         ], dim=-1)
 
     @staticmethod
@@ -158,8 +158,8 @@ class SpiroBatch(object):
 
         direction = theta_start + 0.5 * k_parameters[..., 0] - 0.125 * k_parameters[..., 1] + chord_theta
         chord_lengths = chord * lengths
-        ends = starts + chord_lengths[:, None] * torch.stack([torch.cos(direction),
-                                                              torch.sin(direction)], dim=-1)
+        ends = starts + chord_lengths[..., None] * torch.stack([torch.cos(direction),
+                                                                torch.sin(direction)], dim=-1)
 
         return SpiroBatch(k_parameters, starts, ends,
                           angle_offsets=-chord_theta,
