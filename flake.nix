@@ -2,35 +2,38 @@
   description = "Tensor-based Spline Utilities";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11";
 
     utils.url = "github:numtide/flake-utils";
-    utils.inputs.nixpkgs.follows = "nixpkgs";
 
     ml-pkgs.url = "github:nixvital/ml-pkgs";
     ml-pkgs.inputs.nixpkgs.follows = "nixpkgs";
     ml-pkgs.inputs.utils.follows = "utils";
   };
 
-  outputs = { self, nixpkgs, utils, ... }@inputs: utils.lib.eachSystem [
+  outputs = { self, nixpkgs, utils, ... }@inputs: {
+    overlays.default = final: prev: {
+      pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+        (python-final: python-prev: {
+          tensor-splines = python-final.callPackage ./nix/pkgs/tensor-spline {
+            pytorch = python-final.pytorchWithCuda11;
+          };
+        })
+      ];
+    };
+  } // utils.lib.eachSystem [
     "x86_64-linux"
   ] (system: let
     pkgs = import nixpkgs {
       inherit system;
       config.allowUnfree = true;
-      overlays = [(final: prev: rec {
-        python3 = prev.python3.override {
-          packageOverrides = pyFinal: pyPrev : rec {
-            inherit (inputs.ml-pkgs.packages."${system}")
-              pytorchWithCuda11;
-          };
-        };
-        python3Packages = python3.pkgs;
-      })];
+      overlays = [
+        inputs.ml-pkgs.overlays.torch-family
+      ];
     };
   in {
     packages.default = pkgs.python3Packages.callPackage ./nix/pkgs/tensor-spline {};
-      
+
     devShells = {
       default = pkgs.mkShell rec {
         name = "tensor-splines";
