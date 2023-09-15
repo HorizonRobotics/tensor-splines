@@ -2,7 +2,7 @@
   description = "Tensor-based Spline Utilities";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
 
     utils.url = "github:numtide/flake-utils";
 
@@ -26,7 +26,12 @@
   ] (system: let
     pkgs = import nixpkgs {
       inherit system;
-      config.allowUnfree = true;
+      config = {
+        allowUnfree = true;
+        cudaSupport = true;
+        cudaCapabilities = [ "7.5" "8.6" ];
+        cudaForwardCompat = false;
+      };
       overlays = [
         inputs.ml-pkgs.overlays.torch-family
       ];

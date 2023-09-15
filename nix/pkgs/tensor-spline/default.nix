@@ -3,7 +3,7 @@
 , numpy
 , matplotlib
 , pytorch
-, poetry
+, poetry-core
 }:
 
 buildPythonPackage rec {
@@ -13,11 +13,14 @@ buildPythonPackage rec {
 
   src = ../../..;
 
+  nativeBuildInputs = [
+    poetry-core
+  ];
+
   propagatedBuildInputs = [
     numpy
     matplotlib
     pytorch
-    poetry
   ];
 
   meta = with lib; {
