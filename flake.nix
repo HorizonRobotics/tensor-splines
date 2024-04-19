@@ -2,7 +2,7 @@
   description = "Tensor-based Spline Utilities";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
 
     utils.url = "github:numtide/flake-utils";
 
@@ -16,7 +16,7 @@
       pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
         (python-final: python-prev: {
           tensor-splines = python-final.callPackage ./nix/pkgs/tensor-spline {
-            pytorch = python-final.pytorchWithCuda11;
+            pytorch = python-final.torchWithCuda;
           };
         })
       ];
@@ -46,7 +46,7 @@
         packages = let pythonEnv = pkgs.python3.withPackages (pyPkgs: with pyPkgs; [
           numpy
           matplotlib
-          pytorchWithCuda11
+          torchWithCuda
           jupyterlab
           ipywidgets
         ]); in [
